@@ -1,0 +1,9 @@
+<node>
+  <interface name="com.example.Counter">
+    <method name="Add">
+      <arg type="i" direction="in"/>
+      <arg type="i" direction="in"/>
+      <arg type="i" direction="out"/>
+    </method>
+  </interface>
+</node>
