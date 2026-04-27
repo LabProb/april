@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package telemetry;
+
+service SystemService {
+  // A: status
+  rpc GetMetrics(Empty) returns (Metrics);
+
+  // B: command (з заготовкою під C)
+  rpc SetMode(ModeRequest) returns (ModeResponse);
+}
+
+message Empty {}
+
+message Metrics {
+  float cpu_usage = 1;
+  float memory_usage = 2;
+  float temperature = 3;
+  string mode = 4;
+}
+
+message ModeRequest {
+  string mode = 1; // "eco", "performance"
+}
+
+message ModeResponse {
+  bool success = 1;
+  string current_mode = 2;
+  string message = 3;
+}
