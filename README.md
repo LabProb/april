@@ -1,4 +1,5 @@
 cmake -S . -B build-asan
+
 cmake --build build-asan --target April
 
 Terminal 1:
