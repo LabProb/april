@@ -2,8 +2,6 @@
 #include <iostream>
 
 #include "counter-server-glue.h"
-#include "simple_log.h"
-
 class Counter : public com::example::Counter_adaptor
 {
 public:
@@ -14,8 +12,7 @@ public:
 private:
     int32_t Add(const int32_t& a, const int32_t& b) override
     {
-        auto lg = getLogger("counter add");
-        lg << "Counter Add: " << a << " + " << b;
+        std::cout << "Counter Add: " << a << " + " << b << std::endl;
         return a + b;
     }
 };
@@ -32,8 +29,7 @@ int main()
 
     Counter counter(*object);
 
-    auto lg = getLogger("counter-server");
-    lg(INFO) << "Counter server running...";
+    std::cout << "Counter server running..." << std::endl;
     
     object->finishRegistration();  
     connection->enterEventLoop();

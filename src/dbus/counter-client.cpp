@@ -2,8 +2,6 @@
 #include <iostream>
 
 #include "counter-client-glue.h"
-#include "simple_log.h"
-
 class CounterProxy : public com::example::Counter_proxy
 {
 public:
@@ -25,6 +23,5 @@ int main()
 
     int result = counter.Add(10, 20);
 
-    auto lg = getLogger("counter-client");
-    lg(INFO) << "Result: " << result;
+    std::cout << "Result: " << result << std::endl;
 }
