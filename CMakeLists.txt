@@ -4,15 +4,11 @@ project(April LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(simple_logger REQUIRED)
 find_package(Threads REQUIRED)
 find_package(sdbus-c++ REQUIRED)
 
 add_executable(April src/main.cpp)
-target_link_libraries(April PRIVATE simple_logger::simple_logger sdbus-c++ Threads::Threads)
-
-set(CMAKE_BUILD_RPATH "$ENV{HOME}/hdd/storage/Logger/Logger/install/lib")
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+target_link_libraries(April PRIVATE Threads::Threads)
 
 add_custom_target(run
     COMMAND April
@@ -34,16 +30,16 @@ target_link_libraries(AprilTests
 add_test(NAME AprilTests COMMAND AprilTests)
 
 add_executable(server  src/dbus/server.cpp)
-target_link_libraries(server PRIVATE simple_logger::simple_logger sdbus-c++)
+target_link_libraries(server PRIVATE sdbus-c++ Threads::Threads)
 
 add_executable(client src/dbus/client.cpp)
-target_link_libraries(client PRIVATE simple_logger::simple_logger sdbus-c++)
+target_link_libraries(client PRIVATE sdbus-c++ Threads::Threads)
 
 add_executable(counter_server src/dbus/counter-server.cpp)
-target_link_libraries(counter_server PRIVATE simple_logger::simple_logger sdbus-c++)
+target_link_libraries(counter_server PRIVATE sdbus-c++ Threads::Threads)
 
 add_executable(counter_client src/dbus/counter-client.cpp)
-target_link_libraries(counter_client PRIVATE simple_logger::simple_logger sdbus-c++)
+target_link_libraries(counter_client PRIVATE sdbus-c++ Threads::Threads)
 
 add_custom_command(
     OUTPUT
@@ -75,8 +71,8 @@ target_include_directories(counter_client PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 find_package(Protobuf REQUIRED)
 find_package(gRPC REQUIRED)
 
-find_program(PROTOC protoc)
-find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin)
+find_program(PROTOC protoc REQUIRED)
+find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin REQUIRED)
 
 set(PROTO_FILE ${CMAKE_CURRENT_SOURCE_DIR}/proto/system.proto)
 set(GENERATED_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
@@ -111,8 +107,20 @@ target_link_libraries(system_grpc
     protobuf::libprotobuf
 )
 
+add_library(system_service src/grpc/system_service.cpp)
+target_link_libraries(system_service PUBLIC system_grpc Threads::Threads)
+target_include_directories(system_service PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/grpc)
+
+add_library(system_client_lib src/grpc/system_client.cpp)
+target_link_libraries(system_client_lib PUBLIC system_grpc)
+target_include_directories(system_client_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/grpc)
+
 add_executable(system_server src/grpc/grpc_server.cpp)
-target_link_libraries(system_server PRIVATE system_grpc Threads::Threads)
+target_link_libraries(system_server PRIVATE system_service)
 
 add_executable(system_client src/grpc/grpc_client.cpp)
-target_link_libraries(system_client PRIVATE system_grpc Threads::Threads)
+target_link_libraries(system_client PRIVATE system_client_lib)
+
+target_link_libraries(April PRIVATE system_client_lib)
+
+target_link_libraries(AprilTests PRIVATE system_service system_client_lib)

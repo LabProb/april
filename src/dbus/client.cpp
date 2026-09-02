@@ -1,8 +1,6 @@
 #include <sdbus-c++/sdbus-c++.h>
 #include <iostream>
 
-#include "simple_log.h"
-
 int main() {
     const char* serviceName = "com.example.Calculator";
     const char* objectPath = "/com/example/Calculator";
@@ -20,6 +18,5 @@ int main() {
         .withArguments(5, 7)
         .storeResultsTo(result);
 
-    auto lg = getLogger("client");
-    lg(INFO)<< "Result: " << result;
+    std::cout << "Result: " << result << std::endl;
 }

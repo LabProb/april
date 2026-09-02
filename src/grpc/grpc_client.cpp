@@ -1,58 +1,44 @@
+#include "system_client.h"
+
 #include <grpcpp/grpcpp.h>
-#include "system.grpc.pb.h"
 
 #include <iostream>
 
-using grpc::Channel;
-using grpc::ClientContext;
-using grpc::Status;
+namespace {
 
-class SystemClient {
-public:
-    SystemClient(std::shared_ptr<Channel> channel)
-        : stub_(telemetry::SystemService::NewStub(channel)) {}
-
-    void GetMetrics() {
-        telemetry::Empty request;
-        telemetry::Metrics response;
-        ClientContext context;
-
-        Status status = stub_->GetMetrics(&context, request, &response);
-
-        if (status.ok()) {
-            std::cout << "CPU: " << response.cpu_usage() << "%\n";
-            std::cout << "MEM: " << response.memory_usage() << "%\n";
-            std::cout << "TEMP: " << response.temperature() << "\n";
-            std::cout << "MODE: " << response.mode() << "\n";
-        }
+bool reportTransportFailure(const grpc::Status& status)
+{
+    if (status.ok()) {
+        return false;
     }
 
-    void SetMode(const std::string& mode) {
-        telemetry::ModeRequest request;
-        request.set_mode(mode);
+    std::cerr << "RPC failed (" << status.error_code() << "): "
+              << status.error_message() << '\n';
+    return true;
+}
 
-        telemetry::ModeResponse response;
-        ClientContext context;
+} // namespace
 
-        Status status = stub_->SetMode(&context, request, &response);
+int main()
+{
+    SystemClient client{grpc::CreateChannel("localhost:50051",
+                                             grpc::InsecureChannelCredentials())};
 
-        if (status.ok()) {
-            std::cout << "Success: " << response.success() << "\n";
-            std::cout << "Mode: " << response.current_mode() << "\n";
-            std::cout << "Msg: " << response.message() << "\n";
-        }
+    telemetry::Metrics metrics;
+    if (reportTransportFailure(client.GetMetrics(metrics))) {
+        return 1;
     }
+    std::cout << "CPU: " << metrics.cpu_usage() << "%\n"
+              << "MEM: " << metrics.memory_usage() << "%\n"
+              << "TEMP: " << metrics.temperature() << "\n"
+              << "MODE: " << metrics.mode() << "\n";
 
-private:
-    std::unique_ptr<telemetry::SystemService::Stub> stub_;
-};
-
-int main() {
-    SystemClient client(
-        grpc::CreateChannel("localhost:50051",
-                            grpc::InsecureChannelCredentials()));
-
-    client.GetMetrics();
-    client.SetMode("performance");
-    client.GetMetrics();
+    telemetry::ModeResponse mode_response;
+    if (reportTransportFailure(client.SetMode("performance", mode_response))) {
+        return 1;
+    }
+    std::cout << "Success: " << mode_response.success() << "\n"
+              << "Mode: " << mode_response.current_mode() << "\n"
+              << "Msg: " << mode_response.message() << "\n";
+    return mode_response.success() ? 0 : 1;
 }

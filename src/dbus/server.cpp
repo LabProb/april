@@ -1,8 +1,6 @@
 #include <sdbus-c++/sdbus-c++.h>
 #include <iostream>
 
-#include "simple_log.h"
-
 class Calculator {
 public:
     int Add(int a, int b) {
@@ -30,8 +28,7 @@ int main() {
 
     object->finishRegistration();
 
-    auto lg = getLogger("server");
-    lg(INFO)<<"Server running...";
+    std::cout << "Server running..." << std::endl;
 
     connection->enterEventLoop();
 }
